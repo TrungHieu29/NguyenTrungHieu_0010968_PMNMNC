@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title', 'Chi tiết sinh viên')
+@section('content')
+<div class="d-flex justify-content-between mb-4"><h1 class="page-title h3">{{ $sinhVien->ho_ten }}</h1><a class="btn btn-outline-secondary" href="{{ route('sinh-viens.index') }}">Quay lại</a></div>
+<div class="card"><div class="card-body"><dl class="row mb-0"><dt class="col-sm-3">Mã sinh viên</dt><dd class="col-sm-9">{{ $sinhVien->ma_sinh_vien }}</dd><dt class="col-sm-3">Ngày sinh</dt><dd class="col-sm-9">{{ $sinhVien->ngay_sinh ?: '—' }}</dd><dt class="col-sm-3">Giới tính</dt><dd class="col-sm-9">{{ $sinhVien->gioi_tinh ?: '—' }}</dd><dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ $sinhVien->email }}</dd><dt class="col-sm-3">Điện thoại</dt><dd class="col-sm-9">{{ $sinhVien->so_dien_thoai ?: '—' }}</dd><dt class="col-sm-3">Địa chỉ</dt><dd class="col-sm-9">{{ $sinhVien->dia_chi ?: '—' }}</dd><dt class="col-sm-3">Lớp học</dt><dd class="col-sm-9">{{ $sinhVien->lopHoc?->ten_lop ?? '—' }}</dd><dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9"><span class="badge {{ $sinhVien->trang_thai ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $sinhVien->trang_thai ? 'Đang học' : 'Ngừng' }}</span></dd></dl></div></div>
+@endsection

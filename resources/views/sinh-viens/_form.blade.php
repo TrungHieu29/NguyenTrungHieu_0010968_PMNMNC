@@ -1,0 +1,12 @@
+@php($item = $sinhVien ?? null)
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label" for="ma_sinh_vien">Mã sinh viên *</label><input class="form-control" id="ma_sinh_vien" name="ma_sinh_vien" value="{{ old('ma_sinh_vien', $item?->ma_sinh_vien) }}" required></div>
+<div class="col-md-4"><label class="form-label" for="ho_ten">Họ tên *</label><input class="form-control" id="ho_ten" name="ho_ten" value="{{ old('ho_ten', $item?->ho_ten) }}" required></div>
+<div class="col-md-4"><label class="form-label" for="email">Email *</label><input class="form-control" id="email" type="email" name="email" value="{{ old('email', $item?->email) }}" required></div>
+<div class="col-md-4"><label class="form-label" for="ngay_sinh">Ngày sinh</label><input class="form-control" id="ngay_sinh" type="date" name="ngay_sinh" value="{{ old('ngay_sinh', $item?->ngay_sinh) }}"></div>
+<div class="col-md-4"><label class="form-label" for="gioi_tinh">Giới tính</label><select class="form-select" id="gioi_tinh" name="gioi_tinh"><option value="">Chọn</option>@foreach(['Nam','Nữ'] as $gender)<option value="{{ $gender }}" @selected(old('gioi_tinh', $item?->gioi_tinh) === $gender)>{{ $gender }}</option>@endforeach</select></div>
+<div class="col-md-4"><label class="form-label" for="so_dien_thoai">Điện thoại</label><input class="form-control" id="so_dien_thoai" name="so_dien_thoai" value="{{ old('so_dien_thoai', $item?->so_dien_thoai) }}"></div>
+<div class="col-md-6"><label class="form-label" for="lop_hoc_id">Lớp học *</label><select class="form-select" id="lop_hoc_id" name="lop_hoc_id" required><option value="">Chọn lớp</option>@foreach($lopHocs as $lopHoc)<option value="{{ $lopHoc->id }}" @selected(old('lop_hoc_id', $item?->lop_hoc_id) == $lopHoc->id)>{{ $lopHoc->ma_lop }} · {{ $lopHoc->ten_lop }}</option>@endforeach</select></div>
+<div class="col-md-6"><label class="form-label" for="dia_chi">Địa chỉ</label><input class="form-control" id="dia_chi" name="dia_chi" value="{{ old('dia_chi', $item?->dia_chi) }}"></div>
+<div class="col-12"><input type="hidden" name="trang_thai" value="0"><div class="form-check form-switch"><input class="form-check-input" id="trang_thai" type="checkbox" name="trang_thai" value="1" @checked(old('trang_thai', $item?->trang_thai ?? true))><label class="form-check-label" for="trang_thai">Đang học</label></div></div>
+</div><div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Lưu sinh viên</button><a class="btn btn-outline-secondary" href="{{ route('sinh-viens.index') }}">Hủy</a></div>
