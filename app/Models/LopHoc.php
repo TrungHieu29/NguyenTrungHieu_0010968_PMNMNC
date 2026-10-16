@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model; //Nhờ có Eloquent ORM để tương tác với cơ sở dữ liệu
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LopHoc extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'lop_hocs'; // Tên bảng trong cơ sở dữ liệu
+    protected function casts(): array
+    {
+        return ['trang_thai' => 'boolean', 'si_so' => 'integer'];
+    }
+
+    protected $table = 'lop_hocs';
 
     protected $fillable = [
         'ten_lop',
@@ -22,9 +27,7 @@ class LopHoc extends Model
         'ghi_chu',
         'trang_thai',
     ];
-    /**
-     * Get the sinhViens for the LopHoc.
-     */
+
     public function sinhViens(): HasMany
     {
         return $this->hasMany(SinhVien::class);

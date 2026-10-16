@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Menu;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Menu;
 
 class UpdateMenuRequest extends FormRequest
 {
@@ -15,7 +15,7 @@ class UpdateMenuRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->role === 'admin';
     }
 
     public function rules(): array
@@ -30,7 +30,7 @@ class UpdateMenuRequest extends FormRequest
                 'string',
                 'max:80',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-                Rule::notIn($this->input('slug') === $menu->slug ? [] : ['dashboard', 'login', 'register', 'logout', 'menus', 'lop-hocs', 'sinh-viens', 'api', 'api-playground', 'pages', 'up']),
+                Rule::notIn($this->input('slug') === $menu->slug ? [] : ['dashboard', 'login', 'register', 'logout', 'menus', 'lop-hocs', 'sinh-viens', 'api', 'api-playground', 'pages', 'up', 'users', 'profile']),
                 Rule::unique('menus', 'slug')
                     ->ignore($menu->id),
             ],
@@ -38,7 +38,7 @@ class UpdateMenuRequest extends FormRequest
             'loai_lien_ket' => ['required', Rule::in(['existing', 'page'])],
             'url' => ['exclude_unless:loai_lien_ket,existing', 'required', Rule::in(array_keys(Menu::EXISTING_PAGES))],
             'vi_tri' => 'required|in:sidebar,header',
-            'thu_tu' => 'required|integer|min:0',
+            'thu_tu' => 'required|integer|min:0|max:2147483647',
             'trang_thai' => 'nullable|boolean',
         ];
     }

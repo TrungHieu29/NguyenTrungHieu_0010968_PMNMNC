@@ -3,79 +3,81 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLopHocRequest;
+use App\Http\Requests\UpdateLopHocRequest;
 use App\Models\LopHoc;
 use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class LopHocController extends Controller
 {
     use ApiResponse;
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'trang_thai' => ['nullable', 'boolean'],
-            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort' => ['nullable', 'in:id,ma_lop,ten_lop,si_so'],
+            'direction' => ['nullable', 'in:asc,desc'],
+            'per_page' => ['nullable', 'in:10,20,50'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'si_so_min' => ['nullable', 'integer', 'min:0'],
+            'si_so_max' => ['nullable', 'integer', 'min:0', ...($request->filled('si_so_min') ? ['gte:si_so_min'] : [])],
         ]);
         $query = LopHoc::query();
         if (! empty($filters['search'])) {
-            $query->where(fn ($q) => $q->where('ma_lop', 'like', '%'.$filters['search'].'%')
-                ->orWhere('ten_lop', 'like', '%'.$filters['search'].'%'));
+            $query->where(function ($q) use ($filters) {
+                $q->where('ma_lop', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('ten_lop', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('giao_vien', 'like', '%'.$filters['search'].'%');
+            });
         }
-        if (isset($filters['trang_thai'])) {
-            $query->where('trang_thai', $filters['trang_thai']);
+        foreach (['trang_thai'] as $field) {
+            if (isset($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
         }
+        if (isset($filters['si_so_min'])) {
+            $query->where('si_so', '>=', $filters['si_so_min']);
+        }
+        if (isset($filters['si_so_max'])) {
+            $query->where('si_so', '<=', $filters['si_so_max']);
+        }
+        $direction = $filters['direction'] ?? 'desc';
+        $perPage = (int) ($filters['per_page'] ?? 10);
+        $lopHocs = $query->orderBy($filters['sort'] ?? 'id', $direction)->orderBy('id')
+            ->paginate($perPage)->withQueryString();
 
-        return $this->successResponse($query->orderBy('id', $filters['direction'] ?? 'desc')
-            ->paginate($filters['per_page'] ?? 10)->withQueryString());
+        return $this->successResponse($lopHocs);
     }
 
-    public function store(Request $request)
+    public function store(StoreLopHocRequest $request): JsonResponse
     {
-        $data = $request->validate($this->rules());
+        $data = $request->validated();
         $data['trang_thai'] = $request->boolean('trang_thai', true);
+        $record = LopHoc::create($data);
 
-        return $this->successResponse(LopHoc::create($data), 'Đã tạo lớp học.', 201);
+        return $this->successResponse($record, 'Đã tạo lớp học.', 201);
     }
 
-    public function show(LopHoc $lopHoc)
+    public function show(LopHoc $lopHoc): JsonResponse
     {
         return $this->successResponse($lopHoc);
     }
 
-    public function update(Request $request, LopHoc $lopHoc)
+    public function update(UpdateLopHocRequest $request, LopHoc $lopHoc): JsonResponse
     {
-        $data = $request->validate($this->rules($lopHoc, $request->isMethod('patch')));
-        if ($request->exists('trang_thai')) {
-            $data['trang_thai'] = $request->boolean('trang_thai');
-        }
-        $lopHoc->update($data);
+        $lopHoc->update($request->validated());
 
         return $this->successResponse($lopHoc->refresh(), 'Đã cập nhật lớp học.');
     }
 
-    public function destroy(LopHoc $lopHoc)
+    public function destroy(LopHoc $lopHoc): JsonResponse
     {
         $lopHoc->delete();
 
         return $this->successResponse(null, 'Đã xóa lớp học.');
-    }
-
-    private function rules(?LopHoc $lopHoc = null, bool $partial = false): array
-    {
-        $required = $partial ? 'sometimes' : 'required';
-
-        return [
-            'ten_lop' => [$required, 'string', 'max:255'],
-            'ma_lop' => [$required, 'string', 'max:20', Rule::unique('lop_hocs', 'ma_lop')->ignore($lopHoc?->id)],
-            'si_so' => [$required, 'integer', 'min:1'],
-            'giao_vien' => [$required, 'string', 'max:255'],
-            'sdt_gv' => ['sometimes', 'nullable', 'string', 'max:15'],
-            'ghi_chu' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'trang_thai' => ['sometimes', 'boolean'],
-        ];
     }
 }

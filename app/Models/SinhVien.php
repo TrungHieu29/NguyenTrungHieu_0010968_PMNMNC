@@ -2,15 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SinhVien extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $table = 'sinh_viens'; // Tên bảng trong cơ sở dữ liệu
+
+    protected function casts(): array
+    {
+        return ['trang_thai' => 'boolean', 'ngay_sinh' => 'date:Y-m-d'];
+    }
+
+    protected $table = 'sinh_viens';
+
     protected $fillable = [
         'ma_sinh_vien',
         'ho_ten',
@@ -22,9 +29,7 @@ class SinhVien extends Model
         'lop_hoc_id',
         'trang_thai',
     ];
-    /**
-     * Get the lopHoc that owns the SinhVien.
-     */
+
     public function lopHoc(): BelongsTo
     {
         return $this->belongsTo(LopHoc::class)->withTrashed();

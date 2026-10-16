@@ -2,54 +2,61 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Menu;
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreMenuRequest;
 use App\Http\Requests\UpdateMenuRequest;
+use App\Models\Menu;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class MenuController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'trang_thai' => ['nullable', 'boolean'],
+            'sort' => ['nullable', 'in:id,ten_hien_thi,thu_tu'],
+            'direction' => ['nullable', 'in:asc,desc'],
+            'perPage' => ['nullable', 'in:10,20,50'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'vi_tri' => ['nullable', 'in:sidebar,header'],
+        ]);
         $query = Menu::query();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('ten_hien_thi', 'like', "%{$search}%")
-                ->orWhere('slug', 'like', "%{$search}%")
-                ->orWhere('url', 'like', "%{$search}%");
+        if (! empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('ten_hien_thi', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('slug', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('url', 'like', '%'.$filters['search'].'%');
             });
         }
-
-        if ($request->filled('trang_thai')) {
-            $query->where('trang_thai', $request->trang_thai);
+        foreach (['trang_thai', 'vi_tri'] as $field) {
+            if (isset($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
         }
 
-        $menus = $query
-            ->orderBy('thu_tu', 'asc')
-            ->paginate(10)
-            ->withQueryString();
+        $direction = $filters['direction'] ?? 'asc';
+        $perPage = (int) ($filters['perPage'] ?? 10);
+        $menus = $query->orderBy($filters['sort'] ?? 'thu_tu', $direction)->orderBy('id')
+            ->paginate($perPage)->withQueryString();
 
-        return view('menus.index', compact('menus'));
+        return view('menus.index', [
+            'menus' => $menus,
+            'filters' => $filters,
+            'direction' => $direction,
+            'perPage' => $perPage,
+            'perPageOptions' => [10, 20, 50],
+
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
         return view('menus.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreMenuRequest $request)
+    public function store(StoreMenuRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -64,29 +71,20 @@ class MenuController extends Controller
             ->with('success', 'Thêm Menu thành công.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Menu $menu)
+    public function show(Menu $menu): View
     {
         return view('menus.show', compact('menu'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Menu $menu)
+    public function edit(Menu $menu): View
     {
         return view('menus.edit', compact('menu'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(
         UpdateMenuRequest $request,
         Menu $menu
-    ) {
+    ): RedirectResponse {
         $validated = $request->validated();
 
         $validated['url'] = $validated['loai_lien_ket'] === 'page' ? '/pages/'.$validated['slug'] : $validated['url'];
@@ -100,10 +98,7 @@ class MenuController extends Controller
             ->with('success', 'Cập nhật Menu thành công.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Menu $menu)
+    public function destroy(Menu $menu): RedirectResponse
     {
         $menu->delete();
 

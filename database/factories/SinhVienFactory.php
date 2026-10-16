@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\LopHoc;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class SinhVienFactory extends Factory
@@ -11,6 +12,7 @@ class SinhVienFactory extends Factory
         return [
             'ma_sinh_vien' => fake()->unique()->bothify('SV####'),
             'ho_ten' => fake()->name(),
+            'lop_hoc_id' => LopHoc::factory(),
 
             'ngay_sinh' => fake()
                 ->dateTimeBetween('-24 years', '-18 years')
@@ -18,7 +20,7 @@ class SinhVienFactory extends Factory
 
             'gioi_tinh' => fake()->randomElement([
                 'Nam',
-                'Nữ'
+                'Nữ',
             ]),
 
             'email' => fake()->unique()->safeEmail(),
@@ -30,7 +32,7 @@ class SinhVienFactory extends Factory
                 'Ninh Bình',
                 'Bắc Ninh',
                 'Hưng Yên',
-                'Thái Bình'
+                'Thái Bình',
             ]),
 
             'trang_thai' => fake()->boolean(90),

@@ -1,0 +1,11 @@
+{
+    "Showing": "Hiển thị",
+    "to": "đến",
+    "of": "trên tổng",
+    "results": "bản ghi",
+    "Go to page :page": "Đến trang :page",
+    "Pagination Navigation": "Điều hướng phân trang",
+    "(and :count more error)": "(và :count lỗi khác)",
+    "(and :count more errors)": "(và :count lỗi khác)",
+    "The given data was invalid.": "Dữ liệu không hợp lệ."
+}

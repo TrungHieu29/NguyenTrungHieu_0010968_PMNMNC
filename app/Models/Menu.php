@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Menu extends Model
 {
     use HasFactory;
+
+    protected function casts(): array
+    {
+        return ['trang_thai' => 'boolean', 'thu_tu' => 'integer'];
+    }
 
     protected $fillable = [
         'ten_hien_thi',
@@ -19,11 +24,13 @@ class Menu extends Model
     ];
 
     public const EXISTING_PAGES = [
-        '/dashboard' => 'Dashboard',
+        '/dashboard' => 'Tổng quan',
         '/lop-hocs' => 'Quản lý lớp học',
         '/sinh-viens' => 'Quản lý sinh viên',
         '/menus' => 'Quản lý Menu',
         '/api-playground' => 'API Playground',
+        '/users' => 'Quản lý User',
+        '/profile' => 'Hồ sơ cá nhân',
     ];
 
     public function isPage(): bool
@@ -37,7 +44,7 @@ class Menu extends Model
             return false;
         }
 
-        if ($this->url === '/menus' || $this->slug === 'menus') {
+        if (in_array($this->url, ['/menus', '/users'], true) || in_array($this->slug, ['menus', 'users'], true)) {
             return $user->role === 'admin';
         }
 

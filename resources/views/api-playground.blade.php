@@ -2,7 +2,7 @@
 @section('title', 'API Playground')
 @section('content')
 <h1 class="page-title h3 mb-2">API Playground</h1>
-<p class="text-muted mb-4">Thử REST API bằng phiên đăng nhập hiện tại. Các lệnh xóa chỉ dành cho admin.</p>
+<p class="text-muted mb-4">Thử REST API bằng phiên đăng nhập hiện tại. Admin và Giảng viên đều được thao tác lớp học, sinh viên.</p>
 <div class="card mb-4"><div class="card-body"><form id="api-form" class="row g-3">
 <div class="col-md-6"><label class="form-label" for="endpoint">Endpoint</label><select class="form-select" id="endpoint">
 @foreach (['lop-hocs' => 'Lớp học', 'sinh-viens' => 'Sinh viên'] as $resource => $label)
@@ -17,9 +17,9 @@
 <div class="col-md-3"><label class="form-label" for="resource-id">ID (nếu endpoint cần)</label><input class="form-control" id="resource-id" type="number" min="1" placeholder="Ví dụ: 1"></div>
 <div class="col-md-3"><label class="form-label" for="query">Query parameters</label><input class="form-control" id="query" placeholder="search=ABC&direction=asc"></div>
 <div class="col-12"><label class="form-label" for="body">JSON body (POST, PUT, PATCH)</label><textarea class="form-control font-monospace" id="body" rows="8" placeholder='{"ten_lop":"Lớp A","ma_lop":"A01","si_so":30,"giao_vien":"Giáo viên"}'></textarea></div>
-<div class="col-12"><button class="btn btn-primary" type="submit" id="execute">Execute</button></div>
+<div class="col-12"><button class="btn btn-primary" type="submit" id="execute">Gửi yêu cầu</button></div>
 </form></div></div>
-<div class="card"><div class="card-body"><h2 class="h5">Response <span id="response-status" class="badge text-bg-secondary">Chưa gửi</span></h2><pre id="response-body" class="bg-light rounded p-3 mb-0 text-wrap" style="min-height:8rem">Chọn endpoint rồi nhấn Execute.</pre></div></div>
+<div class="card"><div class="card-body"><h2 class="h5">Kết quả <span id="response-status" class="badge text-bg-secondary">Chưa gửi</span></h2><pre id="response-body" class="bg-light rounded p-3 mb-0 text-wrap" style="min-height:8rem">Chọn endpoint rồi nhấn Gửi yêu cầu.</pre></div></div>
 <script>
 document.getElementById('api-form').addEventListener('submit', async function (event) {
     event.preventDefault();

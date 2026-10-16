@@ -1,45 +1,82 @@
 # StudentManagement
 
-Bài tập Laravel quản lý lớp học, sinh viên và Menu. Dự án dùng Laravel 13, PHP, MySQL, Blade và Bootstrap.
+Ứng dụng quản lý lớp học, sinh viên, Menu, User và hồ sơ cá nhân.
+Sử dụng Laravel 13, PHP 8.3+, MySQL, Blade và Bootstrap 5.
 
-## Chức năng chính
+## 1. Cài đặt và chạy lần đầu
 
-- Đăng ký, đăng nhập, đăng xuất; tài khoản mới mặc định là staff.
-- Admin quản lý lớp học, sinh viên và Menu. Staff được xem, thêm, sửa lớp học và sinh viên nhưng không được xóa hoặc quản lý Menu.
-- Dashboard hiển thị số lượng lớp học và sinh viên.
-- Sidebar lấy mục từ bảng `menus`. Admin có thể thêm trang “đang phát triển” như `/pages/lich-thi` ngay trong Quản lý Menu.
-- RESTful API cho lớp học, sinh viên và trang API Playground để thử API sau khi đăng nhập.
-
-## Cài đặt
-
-Cần PHP 8.3 trở lên, Composer và MySQL. Tạo database rỗng trước khi chạy migration.
+Máy cần có PHP 8.3+ (bật extension `pdo_mysql`), Composer và MySQL đang chạy.
+Mở terminal tại thư mục có file `artisan` rồi chạy:
 
 ```bash
 composer install
 ```
 
-Sao chép `.env.example` thành `.env`, sau đó sửa `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` cho đúng MySQL trên máy. Tiếp tục chạy:
+Nếu chưa có `.env`, sao chép `.env.example` và đổi tên bản sao thành `.env`.
+Tạo database bằng phpMyAdmin hoặc MySQL:
+
+```sql
+CREATE DATABASE student_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Sửa kết nối trong `.env` theo MySQL trên máy:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=student_management
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Sau đó chạy:
 
 ```bash
+php artisan config:clear
 php artisan key:generate
-php artisan migrate
-php artisan db:seed
+php artisan migrate --seed
 php artisan serve
 ```
 
-Mở `http://127.0.0.1:8000`. Seeder tạo admin demo và dữ liệu mẫu khi bảng lớp/sinh viên còn trống; chạy lại không tạo trùng Menu mặc định. Nếu nâng cấp từ bản dùng email để đăng nhập, migration gán username `user<ID>` cho tài khoản cũ (ví dụ ID 7 thành `user7`); mật khẩu cũ được giữ nguyên.
+Mở địa chỉ được terminal thông báo, mặc định là http://127.0.0.1:8000.
+Không cần chạy npm để sử dụng giao diện. Bootstrap và icon được tải qua CDN nên cần Internet để hiển thị đầy đủ.
 
-## Admin demo
+## 2. Đăng nhập và kiểm tra chức năng
 
-- Username: `admin`
-- Mật khẩu: `123456`
+Với database mới, seeder tạo các tài khoản:
 
-Tài khoản này chỉ dùng để kiểm thử ở **local**. Seeder không tạo admin demo trên production. Để thử quyền staff, vào trang Đăng ký và tạo tài khoản mới. Mật khẩu đăng ký cần ít nhất 6 ký tự; email không bắt buộc.
+| Vai trò | Tên đăng nhập | Mật khẩu |
+|---|---|---|
+| Admin | admin | Admin@123456 |
+| Giảng viên | lecturer | Lecturer@123456 |
+| Giảng viên | lecturer2 | Lecturer@123456 |
 
-## Thử API
+Seeder tạo khoảng 10 lớp, 50 sinh viên và các Menu. Chạy lại không ghi đè thông tin hoặc mật khẩu tài khoản đã tồn tại. Nếu dùng database cũ, đăng nhập bằng mật khẩu cũ.
 
-Sau khi đăng nhập, mở **API Playground** ở Sidebar. Chọn endpoint, nhập ID hoặc query nếu cần, nhập JSON body cho lệnh ghi rồi nhấn **Execute**. Trang dùng session hiện tại và tự gửi CSRF token. Admin dùng được tất cả lệnh; staff không được xóa.
+- Admin: quản lý lớp học, sinh viên, Menu, User và tài khoản cá nhân.
+- Giảng viên: xem/thêm/sửa/xóa mềm lớp học, sinh viên; cập nhật hồ sơ và đổi mật khẩu bản thân.
+- Giảng viên không được quản lý Menu hoặc User. Không có đăng ký tài khoản công khai.
+- Sau khi đăng nhập, mở **API Playground** để thử API `/api/lop-hocs` và `/api/sinh-viens`. API dùng session và CSRF, không cần Bearer token.
 
-Với Postman, có thể dùng cùng session: gọi `GET /login`, giữ cookie và lấy `_token` trong form; gửi `POST /login` với `username`, `password`, `_token`. Sau khi đăng nhập, gọi `GET /api-playground` để lấy CSRF token mới trong thẻ meta. Giữ cookie phiên và gửi header `X-CSRF-TOKEN` cho POST, PUT, PATCH, DELETE; thêm `Accept: application/json` và `Content-Type: application/json` khi gửi JSON. Không cần Bearer token.
+Những lần chạy sau chỉ cần bật MySQL và chạy `php artisan serve`. Không dùng `migrate:fresh` với database đang có dữ liệu.
 
-Chạy `php artisan test` để kiểm tra các luồng chính. Dự án không dùng `migrate:fresh` khi database đã có dữ liệu.
+## 3. Chạy test tự động (không bắt buộc)
+
+Bộ test chức năng nằm trong `tests/Feature/StudentManagementTest.php`.
+Test dùng MySQL riêng, không sử dụng database chính. Tạo database test:
+
+```sql
+CREATE DATABASE student_management_codex_test_20261015 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Trong PowerShell tại thư mục dự án, tạo bảng cho database test rồi chạy test:
+
+```powershell
+$env:DB_DATABASE = 'student_management_codex_test_20261015'
+php artisan migrate
+Remove-Item Env:DB_DATABASE
+php artisan test
+```
+
+Thông tin kết nối MySQL dùng chung với `.env`; tên database test được cố định trong `phpunit.xml`. Các bài test dùng transaction và rollback dữ liệu sau mỗi bài.

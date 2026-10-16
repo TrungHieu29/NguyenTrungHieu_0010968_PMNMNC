@@ -2,127 +2,97 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LopHoc;
-use Illuminate\Http\Request;
-use App\Http\Requests\StorelopHocRequest;
+use App\Http\Requests\StoreLopHocRequest;
 use App\Http\Requests\UpdateLopHocRequest;
-use Illuminate\Support\Facades\Validator;
+use App\Models\LopHoc;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class LopHocController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-    private const PER_PAGE_OPTIONS = [10, 20, 50, 100];
-
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-
-        $filters = Validator::make($request->query(), [
-            'search' => 'nullable|string|max:100',
-            'trang_thai' => 'nullable|in:0,1',
-            'si_so_min' => 'nullable|integer|min:0',
-            'si_so_max' => 'nullable|integer|min:0',
-            'direction' => 'nullable|in:asc,desc',
-            'perPage' => 'nullable|in:' . implode(',', self::PER_PAGE_OPTIONS),
-        ])->valid();
-
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'trang_thai' => ['nullable', 'boolean'],
+            'sort' => ['nullable', 'in:id,ma_lop,ten_lop,si_so'],
+            'direction' => ['nullable', 'in:asc,desc'],
+            'perPage' => ['nullable', 'in:10,20,50'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'si_so_min' => ['nullable', 'integer', 'min:0'],
+            'si_so_max' => ['nullable', 'integer', 'min:0', ...($request->filled('si_so_min') ? ['gte:si_so_min'] : [])],
+        ]);
         $query = LopHoc::query();
-
-        if (isset($filters['search'])) {
-            $search = $filters['search'];
-
-            $query->where(function ($q) use ($search) {
-                $q->where('ma_lop', 'like', "%{$search}%")
-                ->orWhere('ten_lop', 'like', "%{$search}%")
-                ->orWhere('giao_vien', 'like', "%{$search}%");
+        if (! empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('ma_lop', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('ten_lop', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('giao_vien', 'like', '%'.$filters['search'].'%');
             });
         }
-
-        if (isset($filters['trang_thai'])) {
-            $query->where('trang_thai', $filters['trang_thai']);
+        foreach (['trang_thai'] as $field) {
+            if (isset($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
         }
-
         if (isset($filters['si_so_min'])) {
             $query->where('si_so', '>=', $filters['si_so_min']);
         }
-
         if (isset($filters['si_so_max'])) {
             $query->where('si_so', '<=', $filters['si_so_max']);
         }
-
         $direction = $filters['direction'] ?? 'desc';
-
-        $query->orderBy('id', $direction);
-
         $perPage = (int) ($filters['perPage'] ?? 10);
-
-        $lopHocs = $query
-            ->paginate($perPage)
-            ->appends($filters);
+        $lopHocs = $query->orderBy($filters['sort'] ?? 'id', $direction)->orderBy('id')
+            ->paginate($perPage)->withQueryString();
 
         return view('lop-hocs.index', [
             'lopHocs' => $lopHocs,
             'filters' => $filters,
             'direction' => $direction,
             'perPage' => $perPage,
-            'perPageOptions' => self::PER_PAGE_OPTIONS,
+            'perPageOptions' => [10, 20, 50],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
-        return view('lop-hocs.create'); // Trả về view tạo lớp học mới
+        return view('lop-hocs.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StorelopHocRequest $request)
+    public function store(StoreLopHocRequest $request): RedirectResponse
     {
-        $validated = $request->validated(); // Lấy dữ liệu đã được xác thực từ request
+        $validated = $request->validated();
         $validated['trang_thai'] = $request->boolean('trang_thai');
-        LopHoc::create($validated); // Tạo lớp học mới trong cơ sở dữ liệu
-        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được tạo thành công.'); // Chuyển hướng về danh sách lớp học với thông báo thành công
+        LopHoc::create($validated);
+
+        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được tạo thành công.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(LopHoc $lopHoc)
+    public function show(LopHoc $lopHoc): View
     {
-        return view('lop-hocs.show', compact('lopHoc')); // Trả về view hiển thị thông tin lớp học
+        return view('lop-hocs.show', compact('lopHoc'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(LopHoc $lopHoc)
+    public function edit(LopHoc $lopHoc): View
     {
-        return view('lop-hocs.edit', compact('lopHoc')); // Trả về view chỉnh sửa thông tin lớp học
+        return view('lop-hocs.edit', compact('lopHoc'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateLopHocRequest $request, LopHoc $lopHoc)
+    public function update(UpdateLopHocRequest $request, LopHoc $lopHoc): RedirectResponse
     {
-        $validated = $request->validated(); // Lấy dữ liệu đã được xác thực từ request
+        $validated = $request->validated();
         $validated['trang_thai'] = $request->boolean('trang_thai');
-        $lopHoc->update($validated); // Cập nhật thông tin lớp học trong cơ sở dữ liệu
-        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được cập nhật thành công.'); // Chuyển hướng về danh sách lớp học với thông báo thành công
+        $lopHoc->update($validated);
+
+        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được cập nhật thành công.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(LopHoc $lopHoc)
+    public function destroy(LopHoc $lopHoc): RedirectResponse
     {
         $lopHoc->delete();
-        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được xóa thành công.'); // Chuyển hướng về danh sách lớp học với thông báo thành công
+
+        return redirect()->route('lop-hocs.index')->with('success', 'Lớp học đã được xóa thành công.');
     }
 }

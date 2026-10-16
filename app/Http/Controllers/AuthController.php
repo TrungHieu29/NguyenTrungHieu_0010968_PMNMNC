@@ -2,55 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Requests\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function loginForm()
+    public function loginForm(): View
     {
         return view('auth.login');
     }
 
-    public function registerForm()
+    public function login(LoginRequest $request): RedirectResponse
     {
-        return view('auth.register');
-    }
-
-    public function register(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'alpha_dash', 'min:3', 'max:50', 'unique:users,username'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
-        ]);
-
-        $user = User::create([
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'email' => $data['email'] ?? null,
-            'password' => $data['password'],
-        ]);
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->route('dashboard');
-    }
-
-    public function login(Request $request): RedirectResponse
-    {
-        $credentials = $request->validate([
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if (! Auth::attempt($credentials)) {
-            return back()->withErrors(['username' => 'Tên đăng nhập hoặc mật khẩu không đúng.'])->onlyInput('username');
+        if (! Auth::attempt([...$request->validated(), 'is_active' => true])) {
+            return back()->withErrors(['username' => 'Thông tin đăng nhập không đúng hoặc tài khoản đã bị khóa.'])->onlyInput('username');
         }
-
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));
@@ -64,5 +33,4 @@ class AuthController extends Controller
 
         return redirect()->route('login');
     }
-
 }
